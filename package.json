@@ -4,14 +4,11 @@
   "description": "learning how to use axe",
   "main": "index.js",
   "scripts": {
-    "test": "mocha",
-    "start": "node server.js",
+    "test": "node scripts/test.js",
+    "start": "node scripts/server.js",
     "sel": "java -jar selenium-server-standalone-2.53.0.jar"
   },
-  "keywords": [
-    "axe"
-  ],
-  "author": "jhun",
+  "author": "",
   "license": "ISC",
   "devDependencies": {
     "axe-core": "^2.0.5",
