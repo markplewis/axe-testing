@@ -6,17 +6,17 @@
   "scripts": {
     "test": "mocha",
     "start": "node server.js",
-    "sel": "java -jar selenium-server-standalone-2.53.0.jar"
+    "sel": "java -jar selenium-server-standalone-3.0.1.jar"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "axe-core": "^2.0.5",
-    "axe-webdriverjs": "^0.3.0",
-    "chromedriver": "^2.25.3",
-    "ecstatic": "^2.1.0",
-    "geckodriver": "^1.2.0",
-    "mocha": "^3.0.2",
-    "selenium-webdriver": "^3.0.0-beta-2"
+    "axe-core": "2.0.5",
+    "axe-webdriverjs": "0.3.0",
+    "chromedriver": "2.25.3",
+    "ecstatic": "2.1.0",
+    "geckodriver": "1.2.0",
+    "mocha": "3.0.2",
+    "selenium-webdriver": "3.0.0-beta-2"
   }
 }
