@@ -6,7 +6,7 @@
   "scripts": {
     "test": "mocha",
     "start": "node server.js",
-    "sel": "java -jar selenium-server-standalone-3.0.1.jar"
+    "sel": "java -jar selenium-server-standalone-2.53.1.jar"
   },
   "author": "",
   "license": "ISC",
@@ -17,6 +17,6 @@
     "ecstatic": "^2.1.0",
     "geckodriver": "^1.2.0",
     "mocha": "^3.0.2",
-    "selenium-webdriver": "^3.0.0-beta-2"
+    "selenium-webdriver": "^2.48.2"
   }
 }
