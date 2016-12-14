@@ -1,41 +1,33 @@
-var selenium = require('selenium-webdriver');
-var AxeBuilder = require('axe-webdriverjs');
-var assert = require('assert');
+if (!process.env.URL) {
+  console.log("Please supply a URL to test. Exiting...");
+  process.exit();
+}
+const url = process.env.URL;
+const browser = "firefox"; // "firefox" or "chrome" (which has problems)
 
-// See https://www.npmjs.com/package/selenium-webdriver
-
-var chrome = require('selenium-webdriver/chrome');
-// As far as I can tell, the following is no longer required:
-// var chromePath = require('chromedriver').path;
-// var chromeService = new chrome.ServiceBuilder(chromePath).build();
-// chrome.setDefaultService(chromeService);
-
-var firefox = require('selenium-webdriver/firefox');
-// As far as I can tell, the following is no longer required:
-// var firefoxPath = require('geckodriver').path;
-// var firefoxService = new firefox.ServiceBuilder(firefoxPath).build();
-// firefox.setDefaultService(firefoxService);
+const { Builder, By, chrome, firefox } = require('selenium-webdriver');
+const AxeBuilder = require('axe-webdriverjs');
+const assert = require('assert');
 
 describe('Accessibility', function() {
-  var browser;
+  let driver;
   this.timeout(10000);
 
   beforeEach(function(done) {
-    browser = new selenium.Builder()
-      .forBrowser("firefox") // "firefox" or "chrome"
+    driver = new Builder()
+      .forBrowser(browser) // "firefox" or "chrome"
       // .setChromeOptions()
       // .setFirefoxOptions()
       .build();
 
-    browser.get('http://localhost:8080')
-      .then(function() {
-        done();
-      });
+    driver.get(url).then(function() {
+      done();
+    });
   });
 
   // Close website after each test is run (so it is opened fresh each time)
   afterEach(function(done) {
-    browser.quit().then(function() {
+    driver.quit().then(function() {
       done();
     });
   });
@@ -43,7 +35,7 @@ describe('Accessibility', function() {
   // xit('should change state with the keyboard', function() {
   //   var selector = 'span[role="radio"][aria-labelledby="radiogroup-0-label-0"]';
   // 
-  //   browser.findElement(selenium.By.css(selector))
+  //   driver.findElement(By.css(selector))
   //     .then(function (element) {
   //       element.sendKeys(Key.SPACE);
   //       return element;
@@ -57,11 +49,13 @@ describe('Accessibility', function() {
   // });
 
   it('should analyze the page with aXe', function(done) {
-    AxeBuilder(browser)
+    AxeBuilder(driver)
       .analyze(function(results) {
-        console.log('Accessibility Violations: ', results.violations.length);
+        console.log(`Accessibility Violations: ${results.violations.length}`);
         if (results.violations.length > 0) {
-          console.log(results.violations);
+          results.violations.forEach((violation, index) => {
+            console.log(`${index + 1}. ${violation.help}`);
+          });
         }
         assert.equal(results.violations.length, 0);
         done();
@@ -69,11 +63,13 @@ describe('Accessibility', function() {
   });
 
   it('should find violations', function(done) {
-    AxeBuilder(browser)
+    AxeBuilder(driver)
       .withRules('html-has-lang')
       .analyze(function(results) {
         if (results.violations.length > 0) {
-          console.log(results);
+          results.violations.forEach((violation, index) => {
+            console.log(`${index + 1}. ${violation.help}`);
+          });
         }
         assert.equal(results.passes.length, 1);
         done();
