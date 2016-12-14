@@ -8,6 +8,7 @@ const browser = "firefox"; // "firefox" or "chrome" (which has problems)
 const { Builder, By, chrome, firefox, until, promise } = require('selenium-webdriver');
 const AxeBuilder = require('axe-webdriverjs');
 const assert = require('assert');
+const colors = require("colors");
 
 describe('Accessibility', function() {
   let driver;
@@ -36,24 +37,47 @@ describe('Accessibility', function() {
     });
   });
   
-  it('title should exist', function(done) {
-    driver.wait(driver.findElement(By.css("title")).then(
-      function(webElement) {
-        console.log("title exists");
-        webElement.getText().then(function(text) {
-          console.log(text);
-        });
-      },
-      function(err) {
-        throw new Error("title does not exist");
-      }
-    ), 10000)
-    .then(function() {
-      done();
-    });
-  });
+  // it('should have a title', function(done) {
+  //   driver.wait(driver.findElement(By.css("title")).then(
+  //     function(webElement) {
+  //       console.log("title exists");
+  //       webElement.getText().then(function(text) {
+  //         console.log(text);
+  //       });
+  //     },
+  //     function(err) {
+  //       throw new Error("title does not exist");
+  //     }
+  //   ), 10000)
+  //   .then(function() {
+  //     done();
+  //   });
+  // });
   
-  it('should analyze the page with aXe', function(done) {
+  // it('should analyze the page with aXe', function(done) {
+  //   driver.wait(driver.findElement(By.css("title")).then(
+  //     function(webElement) {
+  //       console.log("title exists");
+  //     },
+  //     function(err) {
+  //       throw new Error("title does not exist");
+  //     }
+  //   ), 10000)
+  //   .then(function() {
+  //     AxeBuilder(driver).analyze(function(results) {
+  //       console.log(`Accessibility Violations: ${results.violations.length}`);
+  //       if (results.violations.length > 0) {
+  //         results.violations.forEach((violation, index) => {
+  //           console.log(`${index + 1}. ${violation.help}`);
+  //         });
+  //       }
+  //       assert.equal(results.violations.length, 0);
+  //       done();
+  //     });
+  //   });
+  // });
+  
+  it('should find violations', function(done) {
     driver.wait(driver.findElement(By.css("title")).then(
       function(webElement) {
         console.log("title exists");
@@ -63,25 +87,31 @@ describe('Accessibility', function() {
       }
     ), 10000)
     .then(function() {
+      // See https://github.com/dequelabs/axe-core/blob/master/doc/rule-descriptions.md
+      // const rules = ["html-lang-valid", "button-name", "bypass"];
       AxeBuilder(driver)
+        // .withRules(rules)
         .analyze(function(results) {
-          console.log(`Accessibility Violations: ${results.violations.length}`);
           if (results.violations.length > 0) {
             results.violations.forEach((violation, index) => {
-              console.log(`${index + 1}. ${violation.help}`);
+              console.log((index + 1) + ". " + "FAILED".red + " " + violation.help);
             });
           }
-          assert.equal(results.violations.length, 0);
+          if (results.passes.length > 0) {
+            results.passes.forEach((pass, index) => {
+              console.log((index + 1) + ". " + "PASSED".green + " " + pass.help);
+            });
+          }
+          assert.equal(results.passes.length, rules.length);
           done();
         });
-      // done();
     });
   });
     
-  it('some other test', function(done) {
-    console.log("Hello");
-    done();
-  });
+  // it('should say hello', function(done) {
+  //   console.log("Hello");
+  //   done();
+  // });
   
 });
 
