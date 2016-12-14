@@ -15,7 +15,7 @@ describe('Accessibility', function() {
 
   beforeEach(function(done) {
     driver = new Builder()
-      .forBrowser(browser) // "firefox" or "chrome"
+      .forBrowser(browser)
       // .setChromeOptions()
       // .setFirefoxOptions()
       .build();
@@ -25,28 +25,11 @@ describe('Accessibility', function() {
     });
   });
 
-  // Close website after each test is run (so it is opened fresh each time)
   afterEach(function(done) {
     driver.quit().then(function() {
       done();
     });
   });
-
-  // xit('should change state with the keyboard', function() {
-  //   var selector = 'span[role="radio"][aria-labelledby="radiogroup-0-label-0"]';
-  // 
-  //   driver.findElement(By.css(selector))
-  //     .then(function (element) {
-  //       element.sendKeys(Key.SPACE);
-  //       return element;
-  //     })
-  //     .then(function (element) {
-  //       return element.getAttribute('aria-checked')
-  //     })
-  //     .then(function (attr) {
-  //       expect(attr).toEqual('true');
-  //     });
-  // });
 
   it('should analyze the page with aXe', function(done) {
     AxeBuilder(driver)
@@ -75,5 +58,21 @@ describe('Accessibility', function() {
         done();
       });
   });
+  
+  // xit('should change state with the keyboard', function() {
+  //   var selector = 'span[role="radio"][aria-labelledby="radiogroup-0-label-0"]';
+  // 
+  //   driver.findElement(By.css(selector))
+  //     .then(function (element) {
+  //       element.sendKeys(Key.SPACE);
+  //       return element;
+  //     })
+  //     .then(function (element) {
+  //       return element.getAttribute('aria-checked')
+  //     })
+  //     .then(function (attr) {
+  //       expect(attr).toEqual('true');
+  //     });
+  // });
 
 });
