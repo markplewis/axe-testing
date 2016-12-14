@@ -80,7 +80,7 @@ describe('Accessibility', function() {
   it('should find violations', function(done) {
     driver.wait(driver.findElement(By.css("title")).then(
       function(webElement) {
-        console.log("title exists");
+        // console.log("title exists");
       },
       function(err) {
         throw new Error("title does not exist");
