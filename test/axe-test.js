@@ -1,93 +1,249 @@
-const args = process.argv.slice(2);
-if (!args[0]) {
+if (!process.env.URL) {
   console.log("Please supply a URL to test. Exiting...");
   process.exit();
 }
-const url = args[0];
+const url = process.env.URL;
+const browser = "firefox"; // "firefox" or "chrome" (which has problems)
 
-// See https://www.npmjs.com/package/selenium-webdriver
-
-var driver = require('selenium-webdriver');
-var AxeBuilder = require('axe-webdriverjs');
-var assert = require('assert');
-
-var chrome = require('selenium-webdriver/chrome');
-// As far as I can tell, the following is no longer required:
-// var chromePath = require('chromedriver').path;
-// var chromeService = new chrome.ServiceBuilder(chromePath).build();
-// chrome.setDefaultService(chromeService);
-
-var firefox = require('selenium-webdriver/firefox');
-// As far as I can tell, the following is no longer required:
-// var firefoxPath = require('geckodriver').path;
-// var firefoxService = new firefox.ServiceBuilder(firefoxPath).build();
-// firefox.setDefaultService(firefoxService);
+const { Builder, By, chrome, firefox, until, promise } = require('selenium-webdriver');
+const AxeBuilder = require('axe-webdriverjs');
+const assert = require('assert');
+const colors = require("colors");
 
 describe('Accessibility', function() {
-  var browser;
+  let driver;
   this.timeout(10000);
 
   beforeEach(function(done) {
-    browser = new driver.Builder()
-      .forBrowser("chrome") // "firefox" or "chrome"
+    driver = new Builder()
+      .forBrowser(browser)
       // .setChromeOptions()
       // .setFirefoxOptions()
       .build();
 
-    // browser.manage().timeouts("script", 10000);
-    // browser.manage().timeouts("implicit", 10000);
-    // browser.manage().timeouts("page load", 10000);
-
-    // Requires server to be running (npm start)
-    // browser.get('http://localhost:8080').then(function() {
-    //   done();
-    // });
-    
-    browser.get(url).then(function() {
-      console.log("Got " + url);
-      done();
-    });
-  });
-
-  // Close website after each test is run (so it is opened fresh each time)
-  afterEach(function(done) {
-    browser.quit().then(function() {
-      done();
-    });
-  });
-  
-  it('should analyze the page with aXe', function(done) {
-    // this.timeout(10000);
-    // setTimeout(done, 10000);
-    AxeBuilder(browser)
-      .analyze(function(results) {
-        console.log("Hello");
-        console.log('Accessibility Violations: ', results.violations.length);
-        if (results.violations.length > 0) {
-          console.log(results.violations);
-        }
-        assert.equal(results.violations.length, 0);
+    driver.get(url).then(function() {
+      driver.wait(until.elementIsVisible(
+        driver.findElement(By.tagName("h1"))
+      ), 10000)
+      .then(function() {
         done();
       });
-    // done();
+    });
+  });
+
+  afterEach(function(done) {
+    driver.quit().then(function() {
+      done();
+    });
   });
   
+  // it('should have a title', function(done) {
+  //   driver.wait(driver.findElement(By.css("title")).then(
+  //     function(webElement) {
+  //       console.log("title exists");
+  //       webElement.getText().then(function(text) {
+  //         console.log(text);
+  //       });
+  //     },
+  //     function(err) {
+  //       throw new Error("title does not exist");
+  //     }
+  //   ), 10000)
+  //   .then(function() {
+  //     done();
+  //   });
+  // });
+  
+  // it('should analyze the page with aXe', function(done) {
+  //   driver.wait(driver.findElement(By.css("title")).then(
+  //     function(webElement) {
+  //       console.log("title exists");
+  //     },
+  //     function(err) {
+  //       throw new Error("title does not exist");
+  //     }
+  //   ), 10000)
+  //   .then(function() {
+  //     AxeBuilder(driver).analyze(function(results) {
+  //       console.log(`Accessibility Violations: ${results.violations.length}`);
+  //       if (results.violations.length > 0) {
+  //         results.violations.forEach((violation, index) => {
+  //           console.log(`${index + 1}. ${violation.help}`);
+  //         });
+  //       }
+  //       assert.equal(results.violations.length, 0);
+  //       done();
+  //     });
+  //   });
+  // });
+  
+  it('should find violations', function(done) {
+    driver.wait(driver.findElement(By.css("title")).then(
+      function(webElement) {
+        // console.log("title exists");
+      },
+      function(err) {
+        throw new Error("title does not exist");
+      }
+    ), 10000)
+    .then(function() {
+      const axe = AxeBuilder(driver);
+      // See https://github.com/dequelabs/axe-core/blob/master/doc/rule-descriptions.md
+      // const rules = ["html-has-lang", "html-lang-valid", "button-name", "bypass"];
+      const rules = [];
+      if (rules.length) {
+        axe.withRules(rules);
+      }
+      axe.analyze(function(results) {
+        if (results.violations.length > 0) {
+          results.violations.forEach(violation => {
+            console.log("FAILED".red + " " + violation.help);
+            violation.nodes.forEach(node => {
+              console.log(node.html);
+            });
+          });
+        }
+        if (results.passes.length > 0) {
+          results.passes.forEach(pass => {
+            console.log("PASSED".green + " " + pass.help);
+            pass.nodes.forEach(node => {
+              console.log(node.html);
+            });
+          });
+        }
+        if (rules.length) {
+          assert.equal(results.passes.length, rules.length);
+        } else {
+          assert.equal(results.passes.length, 24); // All the rules
+        }
+        done();
+      });
+    });
+  });
+    
+  // it('should say hello', function(done) {
+  //   console.log("Hello");
+  //   done();
+  // });
+  
+});
+
+
+
+
+
+// driver.get(url).then(function() {
+//   done();
+// });
+
+// driver.get(url).then(function() {
+//   return driver.wait(function() {
+//     return driver.findElements(By.tagName("h1"));
+//   }, 10000)
+//   .then(function() {
+//     console.log("h1 present");
+//     done();
+//   });
+// });
+
+// driver.get(url).then(function() {
+//   AxeBuilder(driver)
+//     .analyze(function(results) {
+//       console.log(`Accessibility Violations: ${results.violations.length}`);
+//       if (results.violations.length > 0) {
+//         results.violations.forEach((violation, index) => {
+//           console.log(`${index + 1}. ${violation.help}`);
+//         });
+//       }
+//       assert.equal(results.violations.length, 0);
+//       done();
+//     })
+// });
+
+// it('title should exist', function(done) {
+//   // driver.wait(function() {
+//   //   driver.findElements(By.css("title")).then(function() {
+//   //     console.log("title exists");
+//   //     done();
+//   //   });
+//   // }, 10000);
+//   
+//   // driver.findElements(By.css("title")).then(
+//   //   function(webElements) {
+//   //     if (webElements.length) {
+//   //       webElements[0].getText().then(function(text) {
+//   //         console.log("Title found: " + text);
+//   //         assert(text);
+//   //         done();
+//   //       });
+//   //     } else {
+//   //       assert.fail(1, 1, "Title not found");
+//   //       done();
+//   //     }
+//   //   },
+//   //   function(err) {
+//   //     assert.fail(1, 1, "Title not found");
+//   //     done();
+//   //   }
+//   // );
+// });
+  
+  // it('title should exist', function(done) {
+  //   driver.wait(driver.findElement(By.css("title")), 10000).then(
+  //     function(webElement) {
+  //       console.log("title exists");
+  //       webElement.getText().then(function(text) {
+  //         console.log("title = " + text);
+  //         done();
+  //       });
+  //     },
+  //     function(err) {
+  //       if (err.state && err.state === "no such element") {
+  //         console.log("title does not exist");
+  //         done();
+  //       } else {
+  //         // promise.rejected(err);
+  //         done();
+  //       }
+  //     }
+  //   );
+  // });
+    
+    // AxeBuilder(driver)
+    //   .analyze(function(results) {
+    //     console.log(`Accessibility Violations: ${results.violations.length}`);
+    //     if (results.violations.length > 0) {
+    //       results.violations.forEach((violation, index) => {
+    //         console.log(`${index + 1}. ${violation.help}`);
+    //       });
+    //     }
+    //     assert.equal(results.violations.length, 0);
+    //     done();
+    //   });
+  
+  
+  
+  
+  
+  
   // it('should find violations', function(done) {
-  //   AxeBuilder(browser)
+  //   AxeBuilder(driver)
   //     .withRules('html-has-lang')
   //     .analyze(function(results) {
   //       if (results.violations.length > 0) {
-  //         console.log(results);
+  //         results.violations.forEach((violation, index) => {
+  //           console.log(`${index + 1}. ${violation.help}`);
+  //         });
   //       }
   //       assert.equal(results.passes.length, 1);
   //       done();
   //     });
   // });
-
+  
   // xit('should change state with the keyboard', function() {
   //   var selector = 'span[role="radio"][aria-labelledby="radiogroup-0-label-0"]';
   // 
-  //   browser.findElement(driver.By.css(selector))
+  //   driver.findElement(By.css(selector))
   //     .then(function (element) {
   //       element.sendKeys(Key.SPACE);
   //       return element;
@@ -100,4 +256,17 @@ describe('Accessibility', function() {
   //     });
   // });
 
-});
+  // function isItThere(driver, element) {
+  //   driver.findElement(By.id(element)).then(
+  //     function(webElement) {
+  //       console.log(element + ' exists');
+  //     },
+  //     function(err) {
+  //       if (err.state && err.state === 'no such element') {
+  //         console.log(element + ' not found');
+  //       } else {
+  //         promise.rejected(err);
+  //       }
+  //     }
+  //   );
+  // }
