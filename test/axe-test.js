@@ -40,21 +40,21 @@ describe('Accessibility', function() {
     });
   });
 
-  xit('should change state with the keyboard', function() {
-    var selector = 'span[role="radio"][aria-labelledby="radiogroup-0-label-0"]';
-
-    browser.findElement(selenium.By.css(selector))
-      .then(function (element) {
-        element.sendKeys(Key.SPACE);
-        return element;
-      })
-      .then(function (element) {
-        return element.getAttribute('aria-checked')
-      })
-      .then(function (attr) {
-        expect(attr).toEqual('true');
-      });
-  });
+  // xit('should change state with the keyboard', function() {
+  //   var selector = 'span[role="radio"][aria-labelledby="radiogroup-0-label-0"]';
+  // 
+  //   browser.findElement(selenium.By.css(selector))
+  //     .then(function (element) {
+  //       element.sendKeys(Key.SPACE);
+  //       return element;
+  //     })
+  //     .then(function (element) {
+  //       return element.getAttribute('aria-checked')
+  //     })
+  //     .then(function (attr) {
+  //       expect(attr).toEqual('true');
+  //     });
+  // });
 
   it('should analyze the page with aXe', function(done) {
     AxeBuilder(browser)
