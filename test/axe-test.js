@@ -87,24 +87,37 @@ describe('Accessibility', function() {
       }
     ), 10000)
     .then(function() {
+      const axe = AxeBuilder(driver);
       // See https://github.com/dequelabs/axe-core/blob/master/doc/rule-descriptions.md
-      // const rules = ["html-lang-valid", "button-name", "bypass"];
-      AxeBuilder(driver)
-        // .withRules(rules)
-        .analyze(function(results) {
-          if (results.violations.length > 0) {
-            results.violations.forEach((violation, index) => {
-              console.log((index + 1) + ". " + "FAILED".red + " " + violation.help);
+      // const rules = ["html-has-lang", "html-lang-valid", "button-name", "bypass"];
+      const rules = [];
+      if (rules.length) {
+        axe.withRules(rules);
+      }
+      axe.analyze(function(results) {
+        if (results.violations.length > 0) {
+          results.violations.forEach(violation => {
+            console.log("FAILED".red + " " + violation.help);
+            violation.nodes.forEach(node => {
+              console.log(node.html);
             });
-          }
-          if (results.passes.length > 0) {
-            results.passes.forEach((pass, index) => {
-              console.log((index + 1) + ". " + "PASSED".green + " " + pass.help);
+          });
+        }
+        if (results.passes.length > 0) {
+          results.passes.forEach(pass => {
+            console.log("PASSED".green + " " + pass.help);
+            pass.nodes.forEach(node => {
+              console.log(node.html);
             });
-          }
+          });
+        }
+        if (rules.length) {
           assert.equal(results.passes.length, rules.length);
-          done();
-        });
+        } else {
+          assert.equal(results.passes.length, 24); // All the rules
+        }
+        done();
+      });
     });
   });
     
