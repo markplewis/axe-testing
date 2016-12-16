@@ -10,6 +10,32 @@ const AxeBuilder = require('axe-webdriverjs');
 const assert = require('assert');
 const colors = require("colors");
 
+const fs = require("fs-extra");
+const path = require("path");
+
+function createFile(id, data) {
+  const filePath = path.resolve(`./logs/${id}.txt`);
+  try {
+    fs.outputFileSync(path.resolve(filePath), data);
+  } catch(e) {
+    console.error(e);
+    return false;
+  }
+  return true;
+}
+
+function appendToFile(id, data) {
+  const filePath = path.resolve(`./logs/${id}.txt`);
+  try {
+    fs.ensureFileSync(filePath);
+    fs.appendFileSync(filePath, data);
+  } catch(e) {
+    console.error(e);
+    return false;
+  }
+  return true;
+}
+
 describe('Accessibility', function() {
   let driver;
   this.timeout(10000);
@@ -26,6 +52,7 @@ describe('Accessibility', function() {
         driver.findElement(By.tagName("h1"))
       ), 10000)
       .then(function() {
+        // console.log("h1 is visible");
         done();
       });
     });
@@ -78,47 +105,75 @@ describe('Accessibility', function() {
   // });
   
   it('should find violations', function(done) {
-    driver.wait(driver.findElement(By.css("title")).then(
-      function(webElement) {
-        // console.log("title exists");
-      },
-      function(err) {
-        throw new Error("title does not exist");
-      }
-    ), 10000)
-    .then(function() {
+    // driver.wait(driver.findElement(By.css("title")).then(
+    //   function(webElement) {
+    //     console.log("title exists");
+    //   },
+    //   function(err) {
+    //     throw new Error("title does not exist");
+    //   }
+    // ), 10000)
+    // .then(function() {
+      console.log("Analyzing page...");
       const axe = AxeBuilder(driver);
       // See https://github.com/dequelabs/axe-core/blob/master/doc/rule-descriptions.md
-      // const rules = ["html-has-lang", "html-lang-valid", "button-name", "bypass"];
-      const rules = [];
-      if (rules.length) {
-        axe.withRules(rules);
-      }
+      // axe.withRules(["html-has-lang", "html-lang-valid", "button-name", "bypass"]);
       axe.analyze(function(results) {
+        const failLogId = results.timestamp + "-fail";
+        const passLogId = results.timestamp + "-pass";
+        
         if (results.violations.length > 0) {
+          const failLogCreated = createFile(failLogId,
+            "Accessibility violation log\n\n" +
+            "Date: " + results.timestamp + "\n" +
+            "URL: " + results.url + "\n\n"
+          );
           results.violations.forEach(violation => {
             console.log("FAILED".red + " " + violation.help);
-            violation.nodes.forEach(node => {
-              console.log(node.html);
-            });
+            if (failLogCreated) {
+              appendToFile(failLogId,
+                "FAILED [" + violation.impact + "]:\n" +
+                "  Description: " + violation.description + "\n" +
+                "  Help: " + violation.help + "\n" +
+                "  More info: " + violation.helpUrl + "\n" +
+                "  Tags: " + violation.tags.join(", ") + "\n" +
+                "  HTML affected:\n\n"
+              );
+              violation.nodes.forEach(node => {
+                appendToFile(failLogId, `    ${node.html}\n\n`);
+              });
+              appendToFile(failLogId, "\n");
+            }
           });
         }
         if (results.passes.length > 0) {
+          const passLogCreated = createFile(passLogId,
+            "Accessibility compliance log\n\n" +
+            "Date: " + results.timestamp + "\n" +
+            "URL: " + results.url + "\n\n"
+          );
           results.passes.forEach(pass => {
             console.log("PASSED".green + " " + pass.help);
-            pass.nodes.forEach(node => {
-              console.log(node.html);
-            });
+            if (passLogCreated) {
+              appendToFile(passLogId,
+                "PASSED:\n" +
+                "  Description: " + pass.description + "\n" +
+                "  Help: " + pass.help + "\n" +
+                "  More info: " + pass.helpUrl + "\n" +
+                "  Tags: " + pass.tags.join(", ") + "\n"
+                // "  HTML affected:\n\n"
+              );
+              // pass.nodes.forEach(node => {
+              //   appendToFile(passLogId, `    ${node.html}\n\n`);
+              // });
+              appendToFile(passLogId, "\n");
+            }
           });
         }
-        if (rules.length) {
-          assert.equal(results.passes.length, rules.length);
-        } else {
-          assert.equal(results.passes.length, 24); // All the rules
-        }
+        assert.equal(results.passes.length, results.passes.length + results.violations.length);
         done();
       });
-    });
+    // });
   });
     
   // it('should say hello', function(done) {
