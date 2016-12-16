@@ -13,10 +13,10 @@ const colors = require("colors");
 const fs = require("fs-extra");
 const path = require("path");
 
-function createFile(id, data) {
-  const filePath = path.resolve(`./logs/${id}.txt`);
+function createFile(filePath, data) {
+  const resolvedPath = path.resolve(filePath);
   try {
-    fs.outputFileSync(path.resolve(filePath), data);
+    fs.outputFileSync(resolvedPath, data);
   } catch(e) {
     console.error(e);
     return false;
@@ -24,11 +24,11 @@ function createFile(id, data) {
   return true;
 }
 
-function appendToFile(id, data) {
-  const filePath = path.resolve(`./logs/${id}.txt`);
+function appendToFile(filePath, data) {
+  const resolvedPath = path.resolve(filePath);
   try {
-    fs.ensureFileSync(filePath);
-    fs.appendFileSync(filePath, data);
+    fs.ensureFileSync(resolvedPath);
+    fs.appendFileSync(resolvedPath, data);
   } catch(e) {
     console.error(e);
     return false;
@@ -46,6 +46,8 @@ describe('Accessibility', function() {
       // .setChromeOptions()
       // .setFirefoxOptions()
       .build();
+      
+    console.log("Launching web browser...");
 
     driver.get(url).then(function() {
       driver.wait(until.elementIsVisible(
@@ -119,11 +121,13 @@ describe('Accessibility', function() {
       // See https://github.com/dequelabs/axe-core/blob/master/doc/rule-descriptions.md
       // axe.withRules(["html-has-lang", "html-lang-valid", "button-name", "bypass"]);
       axe.analyze(function(results) {
-        const failLogId = results.timestamp + "-fail";
-        const passLogId = results.timestamp + "-pass";
+        const failLogPath = `./logs/${results.timestamp}-fail.txt`;
+        const passLogPath = `./logs/${results.timestamp}-pass.txt`;
+        let failLogCreated = false;
+        let passLogCreated = false;
         
         if (results.violations.length > 0) {
-          const failLogCreated = createFile(failLogId,
+          failLogCreated = createFile(failLogPath,
             "Accessibility violation log\n\n" +
             "Date: " + results.timestamp + "\n" +
             "URL: " + results.url + "\n\n"
@@ -131,7 +135,7 @@ describe('Accessibility', function() {
           results.violations.forEach(violation => {
             console.log("FAILED".red + " " + violation.help);
             if (failLogCreated) {
-              appendToFile(failLogId,
+              appendToFile(failLogPath,
                 "FAILED [" + violation.impact + "]:\n" +
                 "  Description: " + violation.description + "\n" +
                 "  Help: " + violation.help + "\n" +
@@ -140,14 +144,14 @@ describe('Accessibility', function() {
                 "  HTML affected:\n\n"
               );
               violation.nodes.forEach(node => {
-                appendToFile(failLogId, `    ${node.html}\n\n`);
+                appendToFile(failLogPath, `    ${node.html}\n\n`);
               });
-              appendToFile(failLogId, "\n");
+              appendToFile(failLogPath, "\n");
             }
           });
         }
         if (results.passes.length > 0) {
-          const passLogCreated = createFile(passLogId,
+          passLogCreated = createFile(passLogPath,
             "Accessibility compliance log\n\n" +
             "Date: " + results.timestamp + "\n" +
             "URL: " + results.url + "\n\n"
@@ -155,7 +159,7 @@ describe('Accessibility', function() {
           results.passes.forEach(pass => {
             console.log("PASSED".green + " " + pass.help);
             if (passLogCreated) {
-              appendToFile(passLogId,
+              appendToFile(passLogPath,
                 "PASSED:\n" +
                 "  Description: " + pass.description + "\n" +
                 "  Help: " + pass.help + "\n" +
@@ -164,14 +168,26 @@ describe('Accessibility', function() {
                 // "  HTML affected:\n\n"
               );
               // pass.nodes.forEach(node => {
-              //   appendToFile(passLogId, `    ${node.html}\n\n`);
+              //   appendToFile(passLogPath, `    ${node.html}\n\n`);
               // });
-              appendToFile(passLogId, "\n");
+              appendToFile(passLogPath, "\n");
             }
           });
         }
-        assert.equal(results.passes.length, results.passes.length + results.violations.length);
-        done();
+        console.log("\n-------------------------------------------");
+        console.log(colors.green("PASSED") + ": " + results.passes.length + ", " + colors.red("FAILED") + ": " + results.violations.length);
+        console.log("-------------------------------------------\n");
+        if (failLogCreated && passLogCreated) {
+          console.log("Results have been logged to:");
+          console.log(`  ${passLogPath}`);
+          console.log(`  ${failLogPath}\n`);
+        }
+        try {
+          assert.equal(results.passes.length, results.passes.length + results.violations.length);
+          done();
+        } catch(e) {
+          done(e);
+        }
       });
     // });
   });
