@@ -3,7 +3,7 @@ if (!process.env.URL) {
   process.exit();
 }
 const url = process.env.URL;
-const browser = "firefox"; // "firefox" or "chrome" (which has problems)
+const browser = "firefox"; // "firefox" or "chrome"
 
 const { Builder, By, chrome, firefox, until, promise } = require('selenium-webdriver');
 const AxeBuilder = require('axe-webdriverjs');
